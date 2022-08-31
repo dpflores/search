@@ -1,10 +1,18 @@
 import sys
+from functools import total_ordering
 
 class Node():
-    def __init__(self, state, parent, action):
+    def __init__(self, state, parent, action, dist):
         self.state = state
         self.parent = parent
         self.action = action
+
+        # Adding my code for dijkstra
+        self.dist = dist    # Effort to get here
+    
+    # Added for sorting
+    def __lt__(self, other):
+        return self.dist < other.dist
 
 
 class StackFrontier():
@@ -163,6 +171,67 @@ class Maze():
                     child = Node(state=state, parent=node, action=action)
                     frontier.add(child)
 
+    def get_distance(self, parent, child):
+        """ As it is a uniform grid without weighted distances, allways return 1"""
+        return 1
+
+    def solve_dijkstra(self):
+        """Finds a solution to maze, if one exists, using dijkstra algorithm."""
+
+        # Keep track of number of states explored
+        self.num_explored = 0
+
+        # Initialize frontier to just the starting position
+        start = Node(state=self.start, parent=None, action=None, dist=0)
+        frontier = QueueFrontier()
+        frontier.add(start)
+
+        # Initialize an empty explored set
+        self.explored = set()
+
+        # Keep looping until solution found
+        while True:
+            
+            # If nothing left in frontier, then no path
+            if frontier.empty():
+                raise Exception("no solution")
+
+            # Choose a node from the frontier
+            node = frontier.remove()
+            
+            self.num_explored += 1
+
+            print(node.state)
+            # If node is the goal, then we have a solution
+            if node.state == self.goal:
+                print("distance = ", node.dist)
+                actions = []
+                cells = []
+                while node.parent is not None:
+                    actions.append(node.action)
+                    cells.append(node.state)
+                    node = node.parent
+                actions.reverse()
+                cells.reverse()
+                self.solution = (actions, cells)
+                return
+
+            # Mark node as explored
+            self.explored.add(node.state)
+            
+            for_sorting_list = []
+            # Add neighbors to frontier
+            for action, state in self.neighbors(node.state):
+                if not frontier.contains_state(state) and state not in self.explored:
+                    added_distance = node.dist + self.get_distance(node.parent, node)
+                    child = Node(state=state, parent=node, action=action, dist=added_distance)
+                    for_sorting_list.append(child)
+                    sorted_list = sorted(for_sorting_list)
+
+                    # Adding the sorted nodes to the frontier
+                    for i in range(len(sorted_list)):
+                        frontier.add(sorted_list[i])                
+
 
     def output_image(self, filename, show_solution=True, show_explored=False):
         from PIL import Image, ImageDraw
@@ -222,7 +291,7 @@ m = Maze(sys.argv[1])
 print("Maze:")
 m.print()
 print("Solving...")
-m.solve()
+m.solve_dijkstra()
 print("States Explored:", m.num_explored)
 print("Solution:")
 m.print()
