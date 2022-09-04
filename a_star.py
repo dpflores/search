@@ -91,10 +91,18 @@ class Node:
         return False
 
 
-def h(p1, p2):
+def manhattan_distance(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
     return abs(x1-x2) + abs(y1-y2)
+
+def euler_distance(p1, p2):
+    x1, y1 = p1
+    x2, y2 = p2
+    return ((x1-x2)**2 + (y1-y2)**2)**(1/2)
+def h(p1, p2):
+    # Manhattan distance
+    return manhattan_distance(p1, p2)
 
 def reconstruct_path(came_from, current, draw):
     while current in came_from:
